@@ -18,3 +18,12 @@ async function testDB() {
 }
 
 testDB();
+
+// we left off here, after adding the code from box number 2
+// on the step called " write some helper functions". We got an error code
+// after running this command in the terminal : npm run seed:dev
+
+// > juicebox@1.0.0 seed:dev
+// > nodemon ./db/seed.js
+
+// sh: nodemon: command not found
