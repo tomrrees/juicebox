@@ -11,6 +11,10 @@ const {
   getAllPosts,
   getPostsByUser,
   getUserById,
+  createTags,
+  createPostTag,
+  addTagsToPost,
+  getPostById,
 } = require("./index");
 
 async function dropTables() {
@@ -19,6 +23,8 @@ async function dropTables() {
 
     await client.query(`
 
+      DROP TABLE IF EXISTS post_tags;
+      DROP TABLE IF EXISTS tags;
       DROP TABLE IF EXISTS posts;
       DROP TABLE IF EXISTS users;
       
@@ -62,7 +68,30 @@ async function createTables() {
   
       `);
 
+    console.log("Starting to build tags table...");
+    await client.query(`
+
+      CREATE TABLE tags(
+        id SERIAL PRIMARY KEY,
+        name VARCHAR (255) UNIQUE NOT NULL
+       );
+
+        `);
+    console.log("Starting to build post_tags table...");
+    await client.query(`
+
+        CREATE TABLE post_tags(
+            "postId" INTEGER REFERENCES posts(id),
+            "tagId" INTEGER REFERENCES tags(id),
+            UNIQUE("postId", "tagId")
+
+         );
+
+          `);
+
     console.log("Finished building POSTS tables!");
+    console.log("Finished building tags table.");
+    console.log("Finished building post_tags table.");
     console.log("Finished building tables!");
   } catch (error) {
     console.error("Error building tables!");
@@ -95,7 +124,7 @@ async function createInitialUsers() {
       location: "utah",
     });
 
-    console.log(albert);
+    // console.log(albert);
 
     console.log("Finished creating users!");
   } catch (error) {
@@ -117,11 +146,47 @@ async function createInitialPosts() {
         "This is my first post. I hope I love writing blogs as much as I love writing them.",
     });
 
+    await createPost({
+      authorId: sandra.id,
+      title: "Sandra's First Post",
+      content: "This is my first post. I hope it is better than Albert's.",
+    });
+
+    await createPost({
+      authorId: glamgal.id,
+      title: "Glamgal's First Post",
+      content: "This is my first post. I hope I don't sound like a ditz.",
+    });
+
     // create posts for sandra glamgal
 
     console.log("Finsihed creating posts!");
     // a couple more
   } catch (error) {
+    throw error;
+  }
+}
+
+async function createInitialTags() {
+  try {
+    console.log("Starting to create tags...");
+
+    const [happy, sad, inspo, catman] = await createTags([
+      "#happy",
+      "#worst-day-ever",
+      "#youcandoanything",
+      "#catmandoeverything",
+    ]);
+
+    const [postOne, postTwo, postThree] = await getAllPosts();
+
+    await addTagsToPost(postOne.id, [happy, inspo]);
+    await addTagsToPost(postTwo.id, [sad, inspo]);
+    await addTagsToPost(postThree.id, [happy, catman, inspo]);
+
+    console.log("Finished creating tags!");
+  } catch (error) {
+    console.log("Error creating tags!");
     throw error;
   }
 }
@@ -133,6 +198,7 @@ async function rebuildDB() {
     await createTables();
     await createInitialUsers();
     await createInitialPosts();
+    await createInitialTags();
   } catch (error) {
     console.error(error);
   }
@@ -149,6 +215,7 @@ async function testDB() {
     console.log("Result:", users);
 
     console.log("Calling updateUser on users[0]");
+    console.log("ID FOR UPDATE USER: ", users[0].id);
     const updateUserResult = await updateUser(users[0].id, {
       name: "Newname Sogood",
       location: "Lesterville, KY",
