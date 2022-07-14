@@ -15,6 +15,7 @@ const {
   createPostTag,
   addTagsToPost,
   getPostById,
+  getPostsByTagName,
 } = require("./index");
 
 async function dropTables() {
@@ -144,25 +145,27 @@ async function createInitialPosts() {
       title: "First Post",
       content:
         "This is my first post. I hope I love writing blogs as much as I love writing them.",
+      tags: ["#happy", "#youcandoanything"],
     });
 
     await createPost({
       authorId: sandra.id,
       title: "Sandra's First Post",
       content: "This is my first post. I hope it is better than Albert's.",
+      tags: ["#happy", "#worst-day-ever"],
     });
 
     await createPost({
       authorId: glamgal.id,
       title: "Glamgal's First Post",
       content: "This is my first post. I hope I don't sound like a ditz.",
+      tags: ["#happy", "#youcandoanything", "#canmandoeverything"],
     });
-
-    // create posts for sandra glamgal
 
     console.log("Finsihed creating posts!");
     // a couple more
   } catch (error) {
+    console.log("Error creating posts!");
     throw error;
   }
 }
@@ -192,15 +195,15 @@ async function createInitialTags() {
 }
 
 async function rebuildDB() {
-  client.connect();
   try {
+    client.connect();
     await dropTables();
     await createTables();
     await createInitialUsers();
     await createInitialPosts();
-    await createInitialTags();
   } catch (error) {
-    console.error(error);
+    console.error("Error during rebuildDB");
+    throw error;
   }
 }
 
@@ -232,6 +235,16 @@ async function testDB() {
       content: "Updated Content",
     });
     console.log("Result:", updatePostResult);
+
+    console.log("Calling updatePost on posts[1], only updating tags");
+    const updatePostTagsResult = await updatePost(posts[1].id, {
+      tags: ["#youcandoanything", "#redfish", "#bluefish"],
+    });
+    console.log("Result:", updatePostTagsResult);
+
+    console.log("Calling getPostsByTagName with #happy");
+    const postsWithHappy = await getPostsByTagName("#happy");
+    console.log("Result:", postsWithHappy);
 
     console.log("Calling getUserById with 1");
     const albert = await getUserById(1);
