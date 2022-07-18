@@ -7,6 +7,8 @@ server.use(morgan("dev"));
 
 server.use(express.json());
 
+require("dotenv").config();
+
 const apiRouter = require("./api");
 server.use("/api", apiRouter);
 
